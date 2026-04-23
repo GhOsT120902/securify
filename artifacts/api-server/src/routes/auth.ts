@@ -13,6 +13,24 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
+function getFromAddress() {
+  return process.env.RESEND_FROM_EMAIL ?? "Securify <onboarding@resend.dev>";
+}
+
+async function sendEmail(to: string, subject: string, html: string) {
+  const { data, error } = await getResend().emails.send({
+    from: getFromAddress(),
+    to,
+    subject,
+    html,
+  });
+  if (error) {
+    console.error("Resend error:", JSON.stringify(error));
+    throw new Error(`Email failed to send: ${error.message}`);
+  }
+  console.log("Email sent:", data?.id, "→", to, "|", subject);
+}
+
 function generateOtp(): string {
   return crypto.randomInt(100000, 999999).toString();
 }
@@ -80,12 +98,8 @@ router.post("/register", async (req: Request, res: Response) => {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await db.insert(emailVerificationsTable).values({ email, otp, expiresAt, used: false });
 
-    await getResend().emails.send({
-      from: "Securify <onboarding@resend.dev>",
-      to: email,
-      subject: "Verify your Securify email",
-      html: otpEmailHtml(otp, "Verify your email", "Use the code below to verify your email address. It expires in 15 minutes."),
-    });
+    await sendEmail(email, "Verify your Securify email",
+      otpEmailHtml(otp, "Verify your email", "Use the code below to verify your email address. It expires in 15 minutes."));
 
     res.json({ success: true });
   } catch (err) {
@@ -259,12 +273,8 @@ router.post("/resend-otp", async (req: Request, res: Response) => {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await db.insert(emailVerificationsTable).values({ email, otp, expiresAt, used: false });
 
-    await getResend().emails.send({
-      from: "Securify <onboarding@resend.dev>",
-      to: email,
-      subject: "Your new Securify verification code",
-      html: otpEmailHtml(otp, "New verification code", "Here's your new 6-digit code. It expires in 15 minutes."),
-    });
+    await sendEmail(email, "Your new Securify verification code",
+      otpEmailHtml(otp, "New verification code", "Here's your new 6-digit code. It expires in 15 minutes."));
 
     res.json({ success: true });
   } catch (err) {
@@ -289,12 +299,8 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await db.insert(passwordResetsTable).values({ email, otp, expiresAt, used: false });
 
-    await getResend().emails.send({
-      from: "Securify <onboarding@resend.dev>",
-      to: email,
-      subject: "Your Securify password reset code",
-      html: otpEmailHtml(otp, "Reset your password", "Use the code below to reset your Securify password. It expires in 15 minutes."),
-    });
+    await sendEmail(email, "Your Securify password reset code",
+      otpEmailHtml(otp, "Reset your password", "Use the code below to reset your Securify password. It expires in 15 minutes."));
 
     res.json({ success: true });
   } catch (err) {
@@ -435,11 +441,10 @@ router.get("/google/callback", async (req: Request, res: Response) => {
 
         // Send welcome email via Resend
         try {
-          await getResend().emails.send({
-            from: "Securify <onboarding@resend.dev>",
-            to: googleUser.email,
-            subject: "Welcome to Securify!",
-            html: `<!DOCTYPE html>
+          await sendEmail(
+            googleUser.email,
+            "Welcome to Securify!",
+            `<!DOCTYPE html>
 <html>
   <head><meta charset="utf-8" /></head>
   <body style="margin:0;padding:0;background:#F9FAFB;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
@@ -457,8 +462,8 @@ router.get("/google/callback", async (req: Request, res: Response) => {
       </td></tr>
     </table>
   </body>
-</html>`,
-          });
+</html>`
+          );
         } catch (emailErr) {
           console.error("Welcome email failed:", emailErr);
         }
