@@ -1,3 +1,4 @@
+import { MatrixRain } from "@/components/matrix-rain";
 import { UploadArea } from "@/components/upload-area";
 import { TextInputArea } from "@/components/text-input-area";
 import { UrlInputArea } from "@/components/url-input-area";
@@ -70,6 +71,10 @@ export function Home() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-black">
+      {/* Matrix rain background */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <MatrixRain className="opacity-25" />
+      </div>
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-white/8 bg-black/95 backdrop-blur">
         <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
@@ -132,7 +137,7 @@ export function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 md:px-8 py-8 md:py-12 max-w-7xl">
+      <main className="relative z-[1] flex-1 container mx-auto px-4 md:px-8 py-8 md:py-12 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
           {/* Left Column */}
