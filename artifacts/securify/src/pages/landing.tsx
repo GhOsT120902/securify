@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "wouter";
 
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
@@ -247,11 +249,14 @@ export function Landing() {
       {/* Footer */}
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="flex items-center justify-center gap-2 mb-3">
             <Shield className="h-4 w-4 text-primary" />
             <span className="font-display font-semibold text-foreground">Securify</span>
           </div>
-          <p>Stay safe online.</p>
+          <div className="flex items-center justify-center gap-4">
+            <Link href={`${basePath}/about`} className="hover:text-primary transition-colors">About</Link>
+            <Link href={`${basePath}/privacy`} className="hover:text-primary transition-colors">Privacy Policy</Link>
+          </div>
         </div>
       </footer>
     </div>
