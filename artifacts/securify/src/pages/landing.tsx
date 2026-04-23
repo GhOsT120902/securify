@@ -1,5 +1,6 @@
 import { Shield, ScanSearch, History, Globe, ArrowRight, ShieldAlert, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "wouter";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -16,7 +17,8 @@ export function Landing() {
             </div>
             <span className="font-display font-bold text-xl tracking-tight text-foreground">Securify</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Link href="/sign-in">
               <Button variant="ghost" size="sm">Sign In</Button>
             </Link>

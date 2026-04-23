@@ -6,6 +6,7 @@ import { HistoryPanel } from "@/components/history-panel";
 import { useAnalyze } from "@/hooks/use-analyze";
 import { useGetStats, getGetStatsQueryKey } from "@workspace/api-client-react";
 import { Shield, ShieldAlert, Activity, RefreshCw, Image, Type, LogOut, User } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -71,7 +72,7 @@ export function Home() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {stats && (
               <div className="hidden md:flex items-center gap-6 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -85,6 +86,8 @@ export function Home() {
                 </div>
               </div>
             )}
+
+            <ThemeToggle />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
