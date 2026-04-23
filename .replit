@@ -47,3 +47,4 @@ externalPort = 3000
 
 [userenv.shared]
 VITE_CLERK_PUBLISHABLE_KEY = "pk_test_cG9zc2libGUtbGFkeWJpcmQtODAuY2xlcmsuYWNjb3VudHMuZGV2JA"
+GOOGLE_CLIENT_SECRET = "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"
