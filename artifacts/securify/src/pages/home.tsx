@@ -5,14 +5,25 @@ import { ResultCard } from "@/components/result-card";
 import { HistoryPanel } from "@/components/history-panel";
 import { useAnalyze } from "@/hooks/use-analyze";
 import { useGetStats, getGetStatsQueryKey } from "@workspace/api-client-react";
-import { Shield, ShieldAlert, Activity, RefreshCw, Image, Type } from "lucide-react";
+import { Shield, ShieldAlert, Activity, RefreshCw, Image, Type, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useUser, useClerk } from "@clerk/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type InputMode = "image" | "text";
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export function Home() {
   const { analyze, analyzeText, isAnalyzing, steps, result, error, reset } = useAnalyze();
@@ -20,6 +31,8 @@ export function Home() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [inputMode, setInputMode] = useState<InputMode>("image");
   const queryClient = useQueryClient();
+  const { user } = useUser();
+  const { signOut } = useClerk();
 
   const afterAnalysis = () => {
     setRefreshTrigger((prev) => prev + 1);
@@ -42,6 +55,8 @@ export function Home() {
 
   const showInput = !isAnalyzing && !result && !error;
 
+  const displayName = user?.firstName || user?.username || user?.primaryEmailAddress?.emailAddress?.split("@")[0] || "Account";
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
       {/* Header */}
@@ -56,19 +71,48 @@ export function Home() {
             </span>
           </div>
 
-          {stats && (
-            <div className="hidden md:flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Activity className="h-4 w-4" />
-                <span>{stats.total.toLocaleString()} analyzed</span>
+          <div className="flex items-center gap-4">
+            {stats && (
+              <div className="hidden md:flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Activity className="h-4 w-4" />
+                  <span>{stats.total.toLocaleString()} analyzed</span>
+                </div>
+                <div className="w-px h-4 bg-border" />
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <ShieldAlert className="h-4 w-4 text-destructive/70" />
+                  <span>{stats.scamRate.toFixed(1)}% scam rate</span>
+                </div>
               </div>
-              <div className="w-px h-4 bg-border" />
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <ShieldAlert className="h-4 w-4 text-destructive/70" />
-                <span>{stats.scamRate.toFixed(1)}% scam rate</span>
-              </div>
-            </div>
-          )}
+            )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline max-w-[120px] truncate">{displayName}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-medium text-sm">{displayName}</span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {user?.primaryEmailAddress?.emailAddress}
+                    </span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2 text-muted-foreground cursor-pointer"
+                  onClick={() => signOut({ redirectUrl: `${basePath}/` })}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 

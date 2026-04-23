@@ -1,13 +1,26 @@
-import { Router } from "express";
+import { Router, type Request, type Response, type NextFunction } from "express";
 import { db, analysesTable } from "@workspace/db";
-import { eq, desc, count, sql } from "drizzle-orm";
+import { eq, desc, count, sql, and } from "drizzle-orm";
+import { getAuth } from "@clerk/express";
 import { runAnalysisPipeline, runTextAnalysisPipeline, type AgentEvent } from "../lib/agents.js";
 import { AnalyzeImageBody, ListResultsQueryParams, GetResultParams } from "@workspace/api-zod";
 import { z } from "zod";
 
 const router = Router();
 
-router.post("/analyze", async (req, res) => {
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const auth = getAuth(req);
+  const userId = auth?.userId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized", message: "You must be signed in" });
+    return;
+  }
+  (req as Request & { userId: string }).userId = userId;
+  next();
+}
+
+router.post("/analyze", requireAuth, async (req, res) => {
+  const userId = (req as Request & { userId: string }).userId;
   const parsed = AnalyzeImageBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Bad Request", message: "imageBase64 is required" });
@@ -35,7 +48,6 @@ router.post("/analyze", async (req, res) => {
 
     for await (const event of runAnalysisPipeline(imageBase64, mimeType)) {
       send(event);
-
       if (event.type === "result") {
         resultText = event.text;
         resultIsScam = event.isScam;
@@ -50,11 +62,12 @@ router.post("/analyze", async (req, res) => {
         const existing = await db
           .select()
           .from(analysesTable)
-          .where(eq(analysesTable.messageHash, resultHash))
+          .where(and(eq(analysesTable.messageHash, resultHash), eq(analysesTable.userId, userId)))
           .limit(1);
 
         if (existing.length === 0) {
           await db.insert(analysesTable).values({
+            userId,
             text: resultText,
             summary: resultSummary,
             isScam: resultIsScam,
@@ -77,7 +90,8 @@ const AnalyzeTextBody = z.object({
   text: z.string().min(1, "text is required"),
 });
 
-router.post("/analyze-text", async (req, res) => {
+router.post("/analyze-text", requireAuth, async (req, res) => {
+  const userId = (req as Request & { userId: string }).userId;
   const parsed = AnalyzeTextBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Bad Request", message: "text is required" });
@@ -105,7 +119,6 @@ router.post("/analyze-text", async (req, res) => {
 
     for await (const event of runTextAnalysisPipeline(text)) {
       send(event);
-
       if (event.type === "result") {
         resultText = event.text;
         resultIsScam = event.isScam;
@@ -120,11 +133,12 @@ router.post("/analyze-text", async (req, res) => {
         const existing = await db
           .select()
           .from(analysesTable)
-          .where(eq(analysesTable.messageHash, resultHash))
+          .where(and(eq(analysesTable.messageHash, resultHash), eq(analysesTable.userId, userId)))
           .limit(1);
 
         if (existing.length === 0) {
           await db.insert(analysesTable).values({
+            userId,
             text: resultText,
             summary: resultSummary,
             isScam: resultIsScam,
@@ -143,7 +157,8 @@ router.post("/analyze-text", async (req, res) => {
   }
 });
 
-router.get("/results", async (req, res) => {
+router.get("/results", requireAuth, async (req, res) => {
+  const userId = (req as Request & { userId: string }).userId;
   const parsed = ListResultsQueryParams.safeParse(req.query);
   const limit = parsed.success ? (parsed.data.limit ?? 20) : 20;
   const offset = parsed.success ? (parsed.data.offset ?? 0) : 0;
@@ -153,10 +168,11 @@ router.get("/results", async (req, res) => {
       db
         .select()
         .from(analysesTable)
+        .where(eq(analysesTable.userId, userId))
         .orderBy(desc(analysesTable.createdAt))
         .limit(limit)
         .offset(offset),
-      db.select({ count: count() }).from(analysesTable),
+      db.select({ count: count() }).from(analysesTable).where(eq(analysesTable.userId, userId)),
     ]);
 
     const total = totalResult[0]?.count ?? 0;
@@ -181,7 +197,8 @@ router.get("/results", async (req, res) => {
   }
 });
 
-router.get("/results/:id", async (req, res) => {
+router.get("/results/:id", requireAuth, async (req, res) => {
+  const userId = (req as Request & { userId: string }).userId;
   const parsed = GetResultParams.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: "Bad Request", message: "Invalid id" });
@@ -194,7 +211,7 @@ router.get("/results/:id", async (req, res) => {
     const results = await db
       .select()
       .from(analysesTable)
-      .where(eq(analysesTable.id, id))
+      .where(and(eq(analysesTable.id, id), eq(analysesTable.userId, userId)))
       .limit(1);
 
     if (results.length === 0) {
@@ -218,7 +235,8 @@ router.get("/results/:id", async (req, res) => {
   }
 });
 
-router.get("/stats", async (req, res) => {
+router.get("/stats", requireAuth, async (req, res) => {
+  const userId = (req as Request & { userId: string }).userId;
   try {
     const [totals, recent] = await Promise.all([
       db
@@ -226,10 +244,12 @@ router.get("/stats", async (req, res) => {
           total: count(),
           scamCount: sql<number>`SUM(CASE WHEN is_scam = true THEN 1 ELSE 0 END)::int`,
         })
-        .from(analysesTable),
+        .from(analysesTable)
+        .where(eq(analysesTable.userId, userId)),
       db
         .select()
         .from(analysesTable)
+        .where(eq(analysesTable.userId, userId))
         .orderBy(desc(analysesTable.createdAt))
         .limit(5),
     ]);

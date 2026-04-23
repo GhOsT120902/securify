@@ -4,12 +4,13 @@ import { z } from "zod/v4";
 
 export const analysesTable = pgTable("analyses", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   text: text("text").notNull(),
   summary: text("summary").notNull(),
   isScam: boolean("is_scam").notNull(),
   confidenceLevel: integer("confidence_level").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  messageHash: text("message_hash").notNull().unique(),
+  messageHash: text("message_hash").notNull(),
 });
 
 export const insertAnalysisSchema = createInsertSchema(analysesTable).omit({ id: true, createdAt: true });
