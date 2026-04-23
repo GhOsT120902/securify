@@ -12,7 +12,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useUser, useClerk } from "@clerk/react";
+import { useUser, useAuth } from "@clerk/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,7 +33,7 @@ export function Home() {
   const [inputMode, setInputMode] = useState<InputMode>("image");
   const queryClient = useQueryClient();
   const { user } = useUser();
-  const { signOut } = useClerk();
+  const { signOut } = useAuth();
 
   const afterAnalysis = () => {
     setRefreshTrigger((prev) => prev + 1);
