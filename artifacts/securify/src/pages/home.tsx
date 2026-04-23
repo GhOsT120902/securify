@@ -1,11 +1,12 @@
 import { UploadArea } from "@/components/upload-area";
 import { TextInputArea } from "@/components/text-input-area";
+import { UrlInputArea } from "@/components/url-input-area";
 import { WorkflowPanel } from "@/components/workflow-panel";
 import { ResultCard } from "@/components/result-card";
 import { HistoryPanel } from "@/components/history-panel";
 import { useAnalyze } from "@/hooks/use-analyze";
 import { useGetStats, getGetStatsQueryKey } from "@workspace/api-client-react";
-import { Shield, ShieldAlert, Activity, RefreshCw, Image, Type, LogOut, User } from "lucide-react";
+import { Shield, ShieldAlert, Activity, RefreshCw, Image, Type, Link, LogOut, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -22,12 +23,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type InputMode = "image" | "text";
+type InputMode = "image" | "text" | "url";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export function Home() {
-  const { analyze, analyzeText, isAnalyzing, steps, result, error, reset } = useAnalyze();
+  const { analyze, analyzeText, analyzeUrl, isAnalyzing, steps, result, error, reset } = useAnalyze();
   const { data: stats } = useGetStats();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [inputMode, setInputMode] = useState<InputMode>("image");
@@ -46,6 +47,11 @@ export function Home() {
 
   const handleTextAnalyze = async (text: string) => {
     await analyzeText(text);
+    afterAnalysis();
+  };
+
+  const handleUrlAnalyze = async (url: string) => {
+    await analyzeUrl(url);
     afterAnalysis();
   };
 
@@ -175,6 +181,19 @@ export function Home() {
                       <Type className="h-4 w-4" />
                       Paste Text
                     </button>
+                    <button
+                      onClick={() => setInputMode("url")}
+                      className={cn(
+                        "flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px",
+                        inputMode === "url"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground",
+                      )}
+                      data-testid="tab-url"
+                    >
+                      <Link className="h-4 w-4" />
+                      Check URL
+                    </button>
                   </div>
 
                   {/* Input area */}
@@ -190,7 +209,7 @@ export function Home() {
                         >
                           <UploadArea onUpload={handleUpload} disabled={isAnalyzing} />
                         </motion.div>
-                      ) : (
+                      ) : inputMode === "text" ? (
                         <motion.div
                           key="text-input"
                           initial={{ opacity: 0 }}
@@ -199,6 +218,16 @@ export function Home() {
                           transition={{ duration: 0.15 }}
                         >
                           <TextInputArea onAnalyze={handleTextAnalyze} disabled={isAnalyzing} />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="url-input"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <UrlInputArea onAnalyze={handleUrlAnalyze} disabled={isAnalyzing} />
                         </motion.div>
                       )}
                     </AnimatePresence>

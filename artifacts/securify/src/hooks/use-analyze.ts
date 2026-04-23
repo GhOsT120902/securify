@@ -151,6 +151,28 @@ export function useAnalyze() {
     }
   }, [addOrUpdateStep]);
 
+  const analyzeUrl = useCallback(async (url: string) => {
+    setIsAnalyzing(true);
+    setSteps([]);
+    setResult(null);
+    setError(null);
+
+    try {
+      await streamAnalysis(
+        "/api/analysis/analyze-url",
+        { url },
+        addOrUpdateStep,
+        (r) => setResult(r),
+        (msg) => { setError(msg); setIsAnalyzing(false); },
+        () => setIsAnalyzing(false),
+      );
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "An unexpected error occurred";
+      setError(msg);
+      setIsAnalyzing(false);
+    }
+  }, [addOrUpdateStep]);
+
   const reset = useCallback(() => {
     setSteps([]);
     setResult(null);
@@ -161,6 +183,7 @@ export function useAnalyze() {
   return {
     analyze,
     analyzeText,
+    analyzeUrl,
     isAnalyzing,
     steps,
     result,

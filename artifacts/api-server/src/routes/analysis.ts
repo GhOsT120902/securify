@@ -233,6 +233,128 @@ router.get("/results/:id", requireAuth, async (req, res) => {
   }
 });
 
+const AnalyzeUrlBody = z.object({
+  url: z.string().url("Must be a valid URL"),
+});
+
+async function checkGoogleSafeBrowsing(url: string): Promise<{ isThreat: boolean; threats: string[] }> {
+  const apiKey = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
+  if (!apiKey) return { isThreat: false, threats: [] };
+
+  const body = {
+    client: { clientId: "securify", clientVersion: "1.0" },
+    threatInfo: {
+      threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
+      platformTypes: ["ANY_PLATFORM"],
+      threatEntryTypes: ["URL"],
+      threatEntries: [{ url }],
+    },
+  };
+
+  const res = await fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) return { isThreat: false, threats: [] };
+
+  const data = (await res.json()) as { matches?: { threatType?: string }[] };
+  if (!data.matches || data.matches.length === 0) return { isThreat: false, threats: [] };
+
+  const threats = [...new Set(data.matches.map((m) => m.threatType ?? "UNKNOWN"))];
+  return { isThreat: true, threats };
+}
+
+router.post("/analyze-url", requireAuth, async (req, res) => {
+  const userId = (req as Request & { userId: string }).userId;
+  const parsed = AnalyzeUrlBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Bad Request", message: parsed.error.errors[0]?.message ?? "Invalid URL" });
+    return;
+  }
+
+  const { url } = parsed.data;
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  const send = (event: AgentEvent) => res.write(`data: ${JSON.stringify(event)}\n\n`);
+
+  try {
+    send({ type: "agent_step", agent: "Safe Browsing", content: "Checking against Google Safe Browsing threat database…", status: "running" });
+    const { isThreat, threats } = await checkGoogleSafeBrowsing(url);
+    const threatLabel = threats.map((t) => t.replace(/_/g, " ").toLowerCase()).join(", ");
+    send({ type: "agent_step", agent: "Safe Browsing", content: isThreat ? `Known threat detected: ${threatLabel}` : "Not found in Google Safe Browsing threat lists.", status: "done" });
+
+    send({ type: "agent_step", agent: "AI Analysis", content: "Analyzing URL patterns, domain, and reputation signals…", status: "running" });
+
+    const { OpenAI } = await import("openai");
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const safeBrowsingContext = isThreat
+      ? `Google Safe Browsing flagged this URL as: ${threats.join(", ")}.`
+      : "Google Safe Browsing did not flag this URL in its known threat lists.";
+
+    const aiRes = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0,
+      max_tokens: 600,
+      messages: [
+        {
+          role: "system",
+          content: `You are a cybersecurity expert specializing in URL and phishing analysis. Analyze the given URL for scam/phishing/malware risk.
+Consider: domain age signals, suspicious TLDs, URL structure tricks (typosquatting, punycode, excessive subdomains), redirect chains, known brand impersonation patterns.
+${safeBrowsingContext}
+Respond in JSON: { "isScam": boolean, "confidenceLevel": 1-5, "summary": "1-2 sentence plain-English verdict", "flags": ["list of specific concerns found, or empty array if clean"] }`,
+        },
+        { role: "user", content: `Analyze this URL: ${url}` },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const aiText = aiRes.choices[0]?.message?.content ?? "{}";
+    let aiResult: { isScam?: boolean; confidenceLevel?: number; summary?: string; flags?: string[] } = {};
+    try { aiResult = JSON.parse(aiText); } catch { /* ignore */ }
+
+    const flags = aiResult.flags ?? [];
+    const flagSummary = flags.length > 0 ? ` Flags: ${flags.join("; ")}.` : "";
+    send({ type: "agent_step", agent: "AI Analysis", content: `${aiResult.summary ?? "Analysis complete."}${flagSummary}`, status: "done" });
+
+    if (flags.length > 0) {
+      send({ type: "agent_step", agent: "Risk Assessment", content: `Found ${flags.length} concern${flags.length > 1 ? "s" : ""}: ${flags.join(", ")}.`, status: "running" });
+      send({ type: "agent_step", agent: "Risk Assessment", content: `Confidence level: ${aiResult.confidenceLevel ?? 3}/5.`, status: "done" });
+    }
+
+    const isScam = isThreat || (aiResult.isScam ?? false);
+    const confidence = isThreat ? Math.max(aiResult.confidenceLevel ?? 4, 4) : (aiResult.confidenceLevel ?? 3);
+    const summary = isThreat
+      ? `⚠️ Flagged by Google Safe Browsing as ${threatLabel}. ${aiResult.summary ?? ""}`.trim()
+      : (aiResult.summary ?? "URL appears to be clean.");
+
+    const crypto = await import("crypto");
+    const messageHash = crypto.createHash("sha256").update(url).digest("hex");
+
+    send({ type: "result", isScam, confidenceLevel: confidence, summary, text: url, messageHash });
+
+    try {
+      const existing = await db.select().from(analysesTable).where(and(eq(analysesTable.messageHash, messageHash), eq(analysesTable.userId, userId))).limit(1);
+      if (existing.length === 0) {
+        await db.insert(analysesTable).values({ userId, text: url, summary, isScam, confidenceLevel: confidence, messageHash });
+      }
+    } catch (dbErr) {
+      req.log.error({ err: dbErr }, "Failed to save URL analysis to DB");
+    }
+  } catch (err) {
+    send({ type: "error", message: err instanceof Error ? err.message : "Unknown error occurred" });
+  } finally {
+    res.end();
+  }
+});
+
 router.get("/stats", requireAuth, async (req, res) => {
   const userId = (req as Request & { userId: string }).userId;
   try {
