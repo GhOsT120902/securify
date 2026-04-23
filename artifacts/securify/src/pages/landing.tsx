@@ -83,18 +83,18 @@ export function Landing() {
           </div>
           <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/60 via-black/40 to-black" />
           <div className="relative z-[2] container mx-auto px-4 md:px-8 py-28 md:py-40 text-center max-w-4xl">
-            <div className="badge-glow inline-flex items-center gap-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium px-4 py-1.5 rounded-full mb-8">
+            <div className="hero-anim badge-glow inline-flex items-center gap-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium px-4 py-1.5 rounded-full mb-8" style={{ animationDelay: "0s" }}>
               <Shield className="h-3.5 w-3.5" />
               AI-Powered Scam Detection
             </div>
             <h1 className="text-4xl md:text-6xl font-display font-black tracking-tight mb-6 leading-tight text-white drop-shadow-lg">
-              Is that message a scam?{" "}
-              <span className="text-primary">Find out instantly.</span>
+              <span className="hero-anim block" style={{ animationDelay: "0.18s" }}>Is that message a scam?</span>
+              <span className="hero-anim block text-primary" style={{ animationDelay: "0.36s" }}>Find out instantly.</span>
             </h1>
-            <p className="text-xl text-white/60 mb-10 max-w-2xl mx-auto">
+            <p className="hero-anim text-xl text-white/60 mb-10 max-w-2xl mx-auto" style={{ animationDelay: "0.56s" }}>
               Upload a screenshot or paste suspicious text. Our AI agents analyze it in seconds and explain exactly what's going on — in plain language.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="hero-anim flex flex-col sm:flex-row gap-4 justify-center" style={{ animationDelay: "0.74s" }}>
               <Link href="/sign-up">
                 <Button size="lg" className="cta-glow gap-2 text-base px-8 bg-primary hover:bg-primary/90 text-white border-primary/70 font-semibold">
                   Create free account
