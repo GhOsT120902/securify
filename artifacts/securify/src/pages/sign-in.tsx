@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Shield, Mail, KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
 import { useAuthContext } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
-import { GoogleButton } from "@/components/google-button";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -77,16 +76,6 @@ export function SignInPage() {
               Welcome back
             </h1>
             <p className="text-sm text-muted-foreground">Sign in to your Securify account</p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-border" />
-            <GoogleButton />
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          <div className="flex items-center justify-center">
-            <span className="text-xs text-muted-foreground">or sign in with email</span>
           </div>
 
           <div className="space-y-2">
