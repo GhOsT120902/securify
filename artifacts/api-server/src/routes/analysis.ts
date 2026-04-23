@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db, analysesTable } from "@workspace/db";
 import { eq, desc, count, sql } from "drizzle-orm";
-import { runAnalysisPipeline, type AgentEvent } from "../lib/agents.js";
+import { runAnalysisPipeline, runTextAnalysisPipeline, type AgentEvent } from "../lib/agents.js";
 import { AnalyzeImageBody, ListResultsQueryParams, GetResultParams } from "@workspace/api-zod";
+import { z } from "zod";
 
 const router = Router();
 
@@ -63,6 +64,76 @@ router.post("/analyze", async (req, res) => {
         }
       } catch (dbErr) {
         req.log.error({ err: dbErr }, "Failed to save analysis to DB");
+      }
+    }
+  } catch (err) {
+    send({ type: "error", message: err instanceof Error ? err.message : "Unknown error occurred" });
+  } finally {
+    res.end();
+  }
+});
+
+const AnalyzeTextBody = z.object({
+  text: z.string().min(1, "text is required"),
+});
+
+router.post("/analyze-text", async (req, res) => {
+  const parsed = AnalyzeTextBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Bad Request", message: "text is required" });
+    return;
+  }
+
+  const { text } = parsed.data;
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  const send = (event: AgentEvent) => {
+    res.write(`data: ${JSON.stringify(event)}\n\n`);
+  };
+
+  try {
+    let resultText = "";
+    let resultIsScam = false;
+    let resultConfidence = 3;
+    let resultSummary = "";
+    let resultHash = "";
+
+    for await (const event of runTextAnalysisPipeline(text)) {
+      send(event);
+
+      if (event.type === "result") {
+        resultText = event.text;
+        resultIsScam = event.isScam;
+        resultConfidence = event.confidenceLevel;
+        resultSummary = event.summary;
+        resultHash = event.messageHash;
+      }
+    }
+
+    if (resultText && resultSummary && resultHash) {
+      try {
+        const existing = await db
+          .select()
+          .from(analysesTable)
+          .where(eq(analysesTable.messageHash, resultHash))
+          .limit(1);
+
+        if (existing.length === 0) {
+          await db.insert(analysesTable).values({
+            text: resultText,
+            summary: resultSummary,
+            isScam: resultIsScam,
+            confidenceLevel: resultConfidence,
+            messageHash: resultHash,
+          });
+        }
+      } catch (dbErr) {
+        req.log.error({ err: dbErr }, "Failed to save text analysis to DB");
       }
     }
   } catch (err) {

@@ -1,32 +1,46 @@
 import { UploadArea } from "@/components/upload-area";
+import { TextInputArea } from "@/components/text-input-area";
 import { WorkflowPanel } from "@/components/workflow-panel";
 import { ResultCard } from "@/components/result-card";
 import { HistoryPanel } from "@/components/history-panel";
 import { useAnalyze } from "@/hooks/use-analyze";
-import { useGetStats } from "@workspace/api-client-react";
-import { Shield, ShieldAlert, Activity, BarChart3, RefreshCw } from "lucide-react";
+import { useGetStats, getGetStatsQueryKey } from "@workspace/api-client-react";
+import { Shield, ShieldAlert, Activity, RefreshCw, Image, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getGetStatsQueryKey } from "@workspace/api-client-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+type InputMode = "image" | "text";
 
 export function Home() {
-  const { analyze, isAnalyzing, steps, result, error, reset } = useAnalyze();
+  const { analyze, analyzeText, isAnalyzing, steps, result, error, reset } = useAnalyze();
   const { data: stats } = useGetStats();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [inputMode, setInputMode] = useState<InputMode>("image");
   const queryClient = useQueryClient();
+
+  const afterAnalysis = () => {
+    setRefreshTrigger((prev) => prev + 1);
+    queryClient.invalidateQueries({ queryKey: getGetStatsQueryKey() });
+  };
 
   const handleUpload = async (imageBase64: string, mimeType: string) => {
     await analyze(imageBase64, mimeType);
-    // After analysis completes, update history and stats
-    setRefreshTrigger(prev => prev + 1);
-    queryClient.invalidateQueries({ queryKey: getGetStatsQueryKey() });
+    afterAnalysis();
+  };
+
+  const handleTextAnalyze = async (text: string) => {
+    await analyzeText(text);
+    afterAnalysis();
   };
 
   const handleReset = () => {
     reset();
   };
+
+  const showInput = !isAnalyzing && !result && !error;
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
@@ -48,7 +62,7 @@ export function Home() {
                 <Activity className="h-4 w-4" />
                 <span>{stats.total.toLocaleString()} analyzed</span>
               </div>
-              <div className="w-px h-4 bg-border"></div>
+              <div className="w-px h-4 bg-border" />
               <div className="flex items-center gap-2 text-muted-foreground">
                 <ShieldAlert className="h-4 w-4 text-destructive/70" />
                 <span>{stats.scamRate.toFixed(1)}% scam rate</span>
@@ -61,28 +75,84 @@ export function Home() {
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 md:px-8 py-8 md:py-12 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left Column: Upload & Results */}
-          <div className="lg:col-span-8 space-y-8">
+
+          {/* Left Column */}
+          <div className="lg:col-span-8 space-y-6">
             <div className="space-y-3">
               <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight">
-                Suspicious message? <span className="text-muted-foreground">Let's check.</span>
+                Suspicious message?{" "}
+                <span className="text-primary">Let's check.</span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl">
-                Upload a screenshot of an email, text, or post. Our expert AI agents will analyze it for scam patterns and tell you if it's safe.
+                Upload a screenshot or paste the text of any suspicious message. Our AI agents will analyze it and tell you if it's safe.
               </p>
             </div>
 
             <AnimatePresence mode="wait">
-              {!isAnalyzing && !result && !error ? (
+              {showInput ? (
                 <motion.div
-                  key="upload"
+                  key="input"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-card rounded-2xl border shadow-sm p-2"
+                  className="bg-card rounded-2xl border shadow-sm overflow-hidden"
                 >
-                  <UploadArea onUpload={handleUpload} disabled={isAnalyzing} />
+                  {/* Mode tabs */}
+                  <div className="flex border-b">
+                    <button
+                      onClick={() => setInputMode("image")}
+                      className={cn(
+                        "flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px",
+                        inputMode === "image"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground",
+                      )}
+                      data-testid="tab-image"
+                    >
+                      <Image className="h-4 w-4" />
+                      Screenshot
+                    </button>
+                    <button
+                      onClick={() => setInputMode("text")}
+                      className={cn(
+                        "flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px",
+                        inputMode === "text"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground",
+                      )}
+                      data-testid="tab-text"
+                    >
+                      <Type className="h-4 w-4" />
+                      Paste Text
+                    </button>
+                  </div>
+
+                  {/* Input area */}
+                  <div className="p-4">
+                    <AnimatePresence mode="wait">
+                      {inputMode === "image" ? (
+                        <motion.div
+                          key="image-input"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <UploadArea onUpload={handleUpload} disabled={isAnalyzing} />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="text-input"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <TextInputArea onAnalyze={handleTextAnalyze} disabled={isAnalyzing} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div
@@ -94,9 +164,9 @@ export function Home() {
                   {(result || error) && (
                     <>
                       <div className="flex justify-end">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={handleReset}
                           className="gap-2"
                         >
@@ -109,7 +179,7 @@ export function Home() {
                       </div>
                     </>
                   )}
-                  
+
                   <div className="h-[300px]">
                     <WorkflowPanel steps={steps} />
                   </div>
@@ -120,21 +190,20 @@ export function Home() {
 
           {/* Right Column: History */}
           <div className="lg:col-span-4 space-y-6">
-            {/* Mobile Stats Card */}
             {stats && (
               <div className="md:hidden bg-card rounded-xl border p-4 flex justify-between items-center shadow-sm">
                 <div className="flex flex-col">
                   <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Total Analyzed</span>
                   <span className="font-display font-semibold text-xl">{stats.total.toLocaleString()}</span>
                 </div>
-                <div className="w-px h-10 bg-border"></div>
+                <div className="w-px h-10 bg-border" />
                 <div className="flex flex-col items-end">
                   <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Scam Rate</span>
                   <span className="font-display font-semibold text-xl text-destructive">{stats.scamRate.toFixed(1)}%</span>
                 </div>
               </div>
             )}
-            
+
             <HistoryPanel refreshTrigger={refreshTrigger} />
           </div>
 

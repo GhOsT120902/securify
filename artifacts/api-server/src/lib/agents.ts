@@ -78,65 +78,10 @@ function hashText(text: string): string {
   return createHash("sha256").update(text.trim()).digest("hex");
 }
 
-export async function* runAnalysisPipeline(
-  imageBase64: string,
-  mimeType: string = "image/jpeg",
+async function* runCoreAgents(
+  openai: OpenAI,
+  extractedText: string,
 ): AsyncGenerator<AgentEvent> {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-  // Agent 1: OCR Specialist
-  yield { type: "agent_step", agent: "OCR Specialist", content: "Extracting text from image...", status: "running" };
-
-  let extractedText = "";
-  try {
-    const ocrResp = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image_url",
-              image_url: { url: `data:${mimeType};base64,${imageBase64}` },
-            },
-            {
-              type: "text",
-              text: `You are an OCR Specialist. Extract ALL readable text from this image exactly as it appears. 
-Include every word, number, URL, email, phone number, and punctuation mark you can see.
-Clean up obvious OCR artifacts (e.g. split words) but do not paraphrase or summarize.
-If there is NO readable text in this image (e.g. it's a landscape photo, abstract art, or blank), respond with exactly: NO_TEXT_FOUND
-Otherwise, output only the extracted text — no explanation, no commentary.`,
-            },
-          ],
-        },
-      ],
-      max_tokens: 1000,
-    });
-
-    extractedText = ocrResp.choices[0]?.message?.content?.trim() ?? "";
-  } catch (err) {
-    yield { type: "error", message: `OCR failed: ${err instanceof Error ? err.message : String(err)}` };
-    return;
-  }
-
-  if (extractedText === "NO_TEXT_FOUND" || extractedText === "") {
-    yield {
-      type: "agent_step",
-      agent: "OCR Specialist",
-      content: "No readable text found in the image. Analysis cannot proceed.",
-      status: "done",
-    };
-    yield { type: "error", message: "No readable text was found in the image. Please upload a screenshot containing text." };
-    return;
-  }
-
-  yield {
-    type: "agent_step",
-    agent: "OCR Specialist",
-    content: `Text extracted successfully (${extractedText.length} characters).`,
-    status: "done",
-  };
-
   // Agent 2: Link Checker
   yield { type: "agent_step", agent: "Link Checker", content: "Identifying and checking URLs...", status: "running" };
 
@@ -361,4 +306,88 @@ Respond with ONLY the (possibly translated) summary text — no explanation, no 
   };
 
   yield { type: "done" };
+}
+
+export async function* runAnalysisPipeline(
+  imageBase64: string,
+  mimeType: string = "image/jpeg",
+): AsyncGenerator<AgentEvent> {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  // Agent 1: OCR Specialist
+  yield { type: "agent_step", agent: "OCR Specialist", content: "Extracting text from image...", status: "running" };
+
+  let extractedText = "";
+  try {
+    const ocrResp = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:${mimeType};base64,${imageBase64}` },
+            },
+            {
+              type: "text",
+              text: `You are an OCR Specialist. Extract ALL readable text from this image exactly as it appears. 
+Include every word, number, URL, email, phone number, and punctuation mark you can see.
+Clean up obvious OCR artifacts (e.g. split words) but do not paraphrase or summarize.
+If there is NO readable text in this image (e.g. it's a landscape photo, abstract art, or blank), respond with exactly: NO_TEXT_FOUND
+Otherwise, output only the extracted text — no explanation, no commentary.`,
+            },
+          ],
+        },
+      ],
+      max_tokens: 1000,
+    });
+
+    extractedText = ocrResp.choices[0]?.message?.content?.trim() ?? "";
+  } catch (err) {
+    yield { type: "error", message: `OCR failed: ${err instanceof Error ? err.message : String(err)}` };
+    return;
+  }
+
+  if (extractedText === "NO_TEXT_FOUND" || extractedText === "") {
+    yield {
+      type: "agent_step",
+      agent: "OCR Specialist",
+      content: "No readable text found in the image. Analysis cannot proceed.",
+      status: "done",
+    };
+    yield { type: "error", message: "No readable text was found in the image. Please upload a screenshot containing text." };
+    return;
+  }
+
+  yield {
+    type: "agent_step",
+    agent: "OCR Specialist",
+    content: `Text extracted successfully (${extractedText.length} characters).`,
+    status: "done",
+  };
+
+  yield* runCoreAgents(openai, extractedText);
+}
+
+export async function* runTextAnalysisPipeline(
+  text: string,
+): AsyncGenerator<AgentEvent> {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  const trimmed = text.trim();
+  if (!trimmed) {
+    yield { type: "error", message: "No text provided for analysis." };
+    return;
+  }
+
+  // Skip OCR — text is provided directly
+  yield {
+    type: "agent_step",
+    agent: "Text Input",
+    content: `Text received (${trimmed.length} characters). Proceeding with analysis.`,
+    status: "done",
+  };
+
+  yield* runCoreAgents(openai, trimmed);
 }
