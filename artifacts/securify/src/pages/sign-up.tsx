@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Shield, Mail, KeyRound, Loader2, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { useAuthContext } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
+import { GoogleButton } from "@/components/google-button";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -111,6 +112,14 @@ export function SignUpPage() {
                     Create your account
                   </h1>
                   <p className="text-sm text-muted-foreground">Start checking messages for free</p>
+                </div>
+
+                <GoogleButton label="Sign up with Google" />
+
+                <div className="relative flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <div className="flex-1 h-px bg-border" />
                 </div>
 
                 <div className="space-y-2">

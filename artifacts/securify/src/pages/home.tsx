@@ -55,7 +55,7 @@ export function Home() {
 
   const showInput = !isAnalyzing && !result && !error;
 
-  const displayName = user?.email?.split("@")[0] ?? "Account";
+  const displayName = user?.displayName ?? user?.email?.split("@")[0] ?? "Account";
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
@@ -91,7 +91,11 @@ export function Home() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
-                  <User className="h-4 w-4" />
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={displayName} className="h-5 w-5 rounded-full object-cover" />
+                  ) : (
+                    <User className="h-4 w-4" />
+                  )}
                   <span className="hidden sm:inline max-w-[120px] truncate">{displayName}</span>
                 </Button>
               </DropdownMenuTrigger>

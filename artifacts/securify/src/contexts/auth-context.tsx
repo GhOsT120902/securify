@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 
-export type AuthUser = { id: number; email: string };
+export type AuthUser = { id: number; email: string; displayName?: string | null; avatarUrl?: string | null };
 
 type AuthContextType = {
   user: AuthUser | null;

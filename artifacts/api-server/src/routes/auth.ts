@@ -200,8 +200,12 @@ router.get("/me", async (req: Request, res: Response) => {
   }
 
   try {
-    const users = await db.select({ id: usersTable.id, email: usersTable.email })
-      .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    const users = await db.select({
+        id: usersTable.id,
+        email: usersTable.email,
+        displayName: usersTable.displayName,
+        avatarUrl: usersTable.avatarUrl,
+      }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
 
     if (users.length === 0) {
       req.session.destroy(() => {});
@@ -315,4 +319,139 @@ router.post("/reset-password", async (req: Request, res: Response) => {
   }
 });
 
+// ── Google OAuth ──────────────────────────────────────────────────────────────
+function getGoogleCallbackUrl(): string {
+  if (process.env.GOOGLE_REDIRECT_URI) return process.env.GOOGLE_REDIRECT_URI;
+  const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(",")[0];
+  return `https://${domain}/api/auth/google/callback`;
+}
+
+router.get("/google", (_req: Request, res: Response) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) { res.status(500).send("Google OAuth not configured"); return; }
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: getGoogleCallbackUrl(),
+    response_type: "code",
+    scope: "openid email profile",
+    access_type: "offline",
+    prompt: "select_account",
+  });
+
+  res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+});
+
+router.get("/google/callback", async (req: Request, res: Response) => {
+  const { code, error } = req.query as { code?: string; error?: string };
+
+  if (error || !code) {
+    res.redirect("/?error=google_auth_failed");
+    return;
+  }
+
+  try {
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: process.env.GOOGLE_CLIENT_ID!,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+        redirect_uri: getGoogleCallbackUrl(),
+        grant_type: "authorization_code",
+      }),
+    });
+
+    if (!tokenRes.ok) {
+      console.error("Google token exchange failed:", await tokenRes.text());
+      res.redirect("/?error=google_auth_failed");
+      return;
+    }
+
+    const tokens = await tokenRes.json() as { access_token: string };
+
+    const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    });
+
+    if (!userInfoRes.ok) {
+      res.redirect("/?error=google_auth_failed");
+      return;
+    }
+
+    const googleUser = await userInfoRes.json() as {
+      id: string;
+      email: string;
+      name?: string;
+      picture?: string;
+      verified_email?: boolean;
+    };
+
+    // Find existing user by googleId or email
+    let user = (await db.select().from(usersTable).where(eq(usersTable.googleId, googleUser.id)).limit(1))[0];
+
+    if (!user) {
+      const byEmail = (await db.select().from(usersTable).where(eq(usersTable.email, googleUser.email)).limit(1))[0];
+      if (byEmail) {
+        // Link Google to existing email account
+        await db.update(usersTable).set({
+          googleId: googleUser.id,
+          emailVerified: true,
+          displayName: byEmail.displayName ?? googleUser.name,
+          avatarUrl: byEmail.avatarUrl ?? googleUser.picture,
+        }).where(eq(usersTable.id, byEmail.id));
+        user = { ...byEmail, googleId: googleUser.id, emailVerified: true };
+      } else {
+        // Create new user
+        const inserted = await db.insert(usersTable).values({
+          email: googleUser.email,
+          googleId: googleUser.id,
+          emailVerified: googleUser.verified_email ?? true,
+          displayName: googleUser.name,
+          avatarUrl: googleUser.picture,
+        }).returning();
+        user = inserted[0];
+
+        // Send welcome email via Resend
+        try {
+          await getResend().emails.send({
+            from: "Securify <onboarding@resend.dev>",
+            to: googleUser.email,
+            subject: "Welcome to Securify!",
+            html: `<!DOCTYPE html>
+<html>
+  <head><meta charset="utf-8" /></head>
+  <body style="margin:0;padding:0;background:#F9FAFB;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9FAFB;padding:40px 0;">
+      <tr><td align="center">
+        <table width="480" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <tr><td style="background:#1E3A8A;padding:28px 40px;"><span style="color:#FFFFFF;font-size:20px;font-weight:700;">🛡️ Securify</span></td></tr>
+          <tr><td style="padding:40px;">
+            <h1 style="margin:0 0 12px;font-size:24px;font-weight:700;color:#1F2937;">Welcome${googleUser.name ? `, ${googleUser.name.split(" ")[0]}` : ""}!</h1>
+            <p style="margin:0 0 20px;font-size:15px;color:#6B7280;line-height:1.6;">Your Securify account is ready. Upload a screenshot or paste any suspicious message and our AI will tell you if it's a scam — in seconds.</p>
+            <p style="margin:0;font-size:13px;color:#9CA3AF;">Stay safe online 🛡️</p>
+          </td></tr>
+          <tr><td style="background:#F9FAFB;padding:20px 40px;border-top:1px solid #E5E7EB;"><p style="margin:0;font-size:12px;color:#9CA3AF;text-align:center;">© ${new Date().getFullYear()} Securify</p></td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`,
+          });
+        } catch (emailErr) {
+          console.error("Welcome email failed:", emailErr);
+        }
+      }
+    }
+
+    req.session.userId = user.id;
+    res.redirect("/app");
+  } catch (err) {
+    console.error("Google callback error:", err);
+    res.redirect("/?error=google_auth_failed");
+  }
+});
+
 export default router;
+
