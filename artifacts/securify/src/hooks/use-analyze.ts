@@ -151,6 +151,28 @@ export function useAnalyze() {
     }
   }, [addOrUpdateStep]);
 
+  const analyzeDocument = useCallback(async (fileBase64: string, mimeType: string, fileName: string) => {
+    setIsAnalyzing(true);
+    setSteps([]);
+    setResult(null);
+    setError(null);
+
+    try {
+      await streamAnalysis(
+        "/api/analysis/analyze-document",
+        { fileBase64, mimeType, fileName },
+        addOrUpdateStep,
+        (r) => setResult(r),
+        (msg) => { setError(msg); setIsAnalyzing(false); },
+        () => setIsAnalyzing(false),
+      );
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "An unexpected error occurred";
+      setError(msg);
+      setIsAnalyzing(false);
+    }
+  }, [addOrUpdateStep]);
+
   const analyzeUrl = useCallback(async (url: string) => {
     setIsAnalyzing(true);
     setSteps([]);
@@ -183,6 +205,7 @@ export function useAnalyze() {
   return {
     analyze,
     analyzeText,
+    analyzeDocument,
     analyzeUrl,
     isAnalyzing,
     steps,

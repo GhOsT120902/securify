@@ -37,7 +37,7 @@ export function TextInputArea({ onAnalyze, disabled }: TextInputAreaProps) {
             "w-full min-h-[180px] resize-none rounded-xl border border-border/60 bg-card px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all duration-200 pr-9",
             disabled && "opacity-50 cursor-not-allowed",
           )}
-          placeholder="Paste the text of the message here — SMS, email, social post, or any suspicious content..."
+          placeholder="Paste the SMS message text here — e.g. 'Your package is waiting, click here to confirm delivery…'"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}

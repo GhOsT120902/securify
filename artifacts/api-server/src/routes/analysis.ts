@@ -233,6 +233,95 @@ router.get("/results/:id", requireAuth, async (req, res) => {
   }
 });
 
+const AnalyzeDocumentBody = z.object({
+  fileBase64: z.string().min(1, "fileBase64 is required"),
+  mimeType: z.enum([
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+  ]),
+  fileName: z.string().optional(),
+});
+
+router.post("/analyze-document", requireAuth, async (req, res) => {
+  const userId = (req as Request & { userId: string }).userId;
+  const parsed = AnalyzeDocumentBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Bad Request", message: parsed.error.errors[0]?.message ?? "Invalid request" });
+    return;
+  }
+
+  const { fileBase64, mimeType, fileName } = parsed.data;
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  const send = (event: AgentEvent) => res.write(`data: ${JSON.stringify(event)}\n\n`);
+
+  try {
+    send({ type: "agent_step", agent: "Document Parser", content: `Extracting text from ${fileName ?? "document"}…`, status: "running" });
+
+    const buffer = Buffer.from(fileBase64, "base64");
+    let extractedText = "";
+
+    if (mimeType === "application/pdf") {
+      const pdfParse = (await import("pdf-parse")).default;
+      const result = await pdfParse(buffer);
+      extractedText = result.text.trim();
+    } else {
+      const mammoth = await import("mammoth");
+      const result = await mammoth.extractRawText({ buffer });
+      extractedText = result.value.trim();
+    }
+
+    if (!extractedText || extractedText.length < 10) {
+      send({ type: "error", message: "Could not extract readable text from this document. It may be scanned or image-only." });
+      res.end();
+      return;
+    }
+
+    const previewLength = 120;
+    const preview = extractedText.length > previewLength ? extractedText.slice(0, previewLength) + "…" : extractedText;
+    send({ type: "agent_step", agent: "Document Parser", content: `Extracted ${extractedText.length.toLocaleString()} characters. Preview: "${preview}"`, status: "done" });
+
+    let resultText = "";
+    let resultIsScam = false;
+    let resultConfidence = 3;
+    let resultSummary = "";
+    let resultHash = "";
+
+    for await (const event of runTextAnalysisPipeline(extractedText.slice(0, 8000))) {
+      send(event);
+      if (event.type === "result") {
+        resultText = event.text;
+        resultIsScam = event.isScam;
+        resultConfidence = event.confidenceLevel;
+        resultSummary = event.summary;
+        resultHash = event.messageHash;
+      }
+    }
+
+    if (resultText && resultSummary && resultHash) {
+      try {
+        const existing = await db.select().from(analysesTable)
+          .where(and(eq(analysesTable.messageHash, resultHash), eq(analysesTable.userId, userId))).limit(1);
+        if (existing.length === 0) {
+          await db.insert(analysesTable).values({ userId, text: resultText, summary: resultSummary, isScam: resultIsScam, confidenceLevel: resultConfidence, messageHash: resultHash });
+        }
+      } catch (dbErr) {
+        req.log.error({ err: dbErr }, "Failed to save document analysis to DB");
+      }
+    }
+  } catch (err) {
+    send({ type: "error", message: err instanceof Error ? err.message : "Unknown error occurred" });
+  } finally {
+    res.end();
+  }
+});
+
 const AnalyzeUrlBody = z.object({
   url: z.string().url("Must be a valid URL"),
 });

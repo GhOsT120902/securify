@@ -1,12 +1,13 @@
 import { UploadArea } from "@/components/upload-area";
 import { TextInputArea } from "@/components/text-input-area";
 import { UrlInputArea } from "@/components/url-input-area";
+import { DocumentUploadArea } from "@/components/document-upload-area";
 import { WorkflowPanel } from "@/components/workflow-panel";
 import { ResultCard } from "@/components/result-card";
 import { HistoryPanel } from "@/components/history-panel";
 import { useAnalyze } from "@/hooks/use-analyze";
 import { useGetStats, getGetStatsQueryKey } from "@workspace/api-client-react";
-import { Shield, ShieldAlert, Activity, RefreshCw, Image, Type, Link, LogOut, User } from "lucide-react";
+import { Shield, ShieldAlert, Activity, RefreshCw, Image, MessageSquare, Link, FileText, LogOut, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -23,12 +24,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type InputMode = "image" | "text" | "url";
+type InputMode = "image" | "text" | "url" | "document";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export function Home() {
-  const { analyze, analyzeText, analyzeUrl, isAnalyzing, steps, result, error, reset } = useAnalyze();
+  const { analyze, analyzeText, analyzeDocument, analyzeUrl, isAnalyzing, steps, result, error, reset } = useAnalyze();
   const { data: stats } = useGetStats();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [inputMode, setInputMode] = useState<InputMode>("image");
@@ -52,6 +53,11 @@ export function Home() {
 
   const handleUrlAnalyze = async (url: string) => {
     await analyzeUrl(url);
+    afterAnalysis();
+  };
+
+  const handleDocumentAnalyze = async (fileBase64: string, mimeType: string, fileName: string) => {
+    await analyzeDocument(fileBase64, mimeType, fileName);
     afterAnalysis();
   };
 
@@ -178,8 +184,8 @@ export function Home() {
                       )}
                       data-testid="tab-text"
                     >
-                      <Type className="h-4 w-4" />
-                      Paste Text
+                      <MessageSquare className="h-4 w-4" />
+                      SMS
                     </button>
                     <button
                       onClick={() => setInputMode("url")}
@@ -193,6 +199,19 @@ export function Home() {
                     >
                       <Link className="h-4 w-4" />
                       Check URL
+                    </button>
+                    <button
+                      onClick={() => setInputMode("document")}
+                      className={cn(
+                        "flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px",
+                        inputMode === "document"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground",
+                      )}
+                      data-testid="tab-document"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Document
                     </button>
                   </div>
 
@@ -219,7 +238,7 @@ export function Home() {
                         >
                           <TextInputArea onAnalyze={handleTextAnalyze} disabled={isAnalyzing} />
                         </motion.div>
-                      ) : (
+                      ) : inputMode === "url" ? (
                         <motion.div
                           key="url-input"
                           initial={{ opacity: 0 }}
@@ -228,6 +247,16 @@ export function Home() {
                           transition={{ duration: 0.15 }}
                         >
                           <UrlInputArea onAnalyze={handleUrlAnalyze} disabled={isAnalyzing} />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="document-input"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <DocumentUploadArea onAnalyze={handleDocumentAnalyze} disabled={isAnalyzing} />
                         </motion.div>
                       )}
                     </AnimatePresence>
