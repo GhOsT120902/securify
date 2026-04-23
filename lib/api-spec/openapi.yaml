@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Securify scam detection API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: analysis
+    description: Scam analysis operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,106 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /analysis/analyze:
+    post:
+      operationId: analyzeImage
+      tags: [analysis]
+      summary: Analyze an image for scam content
+      description: Accepts a base64-encoded image and runs the multi-agent scam detection pipeline. Returns a streaming Server-Sent Events response.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeImageBody"
+      responses:
+        "200":
+          description: SSE stream of agent events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /analysis/results:
+    get:
+      operationId: listResults
+      tags: [analysis]
+      summary: List past analysis results
+      description: Returns paginated list of stored scam analysis results
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: List of analysis results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListResultsResponse"
+
+  /analysis/results/{id}:
+    get:
+      operationId: getResult
+      tags: [analysis]
+      summary: Get a specific analysis result
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /analysis/stats:
+    get:
+      operationId: getStats
+      tags: [analysis]
+      summary: Get aggregated statistics
+      description: Returns total counts, scam rate, and recent activity
+      responses:
+        "200":
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +136,106 @@ components:
       required:
         - status
 
+    AnalyzeImageBody:
+      type: object
+      properties:
+        imageBase64:
+          type: string
+          description: Base64-encoded image data (without data URI prefix)
+        mimeType:
+          type: string
+          description: MIME type of the image (e.g. image/jpeg, image/png)
+          default: image/jpeg
+      required:
+        - imageBase64
+
+    AnalysisResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        text:
+          type: string
+          description: Extracted text from the image
+        summary:
+          type: string
+          description: Plain-language analysis summary
+        isScam:
+          type: boolean
+          description: Whether the message is a scam
+        confidenceLevel:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Confidence level (1=low, 5=high)
+        createdAt:
+          type: string
+          format: date-time
+        messageHash:
+          type: string
+          description: SHA-256 hash for deduplication
+      required:
+        - id
+        - text
+        - summary
+        - isScam
+        - confidenceLevel
+        - createdAt
+        - messageHash
+
+    ListResultsResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalysisResult"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+        - results
+        - total
+        - limit
+        - offset
+
+    StatsResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total analyses performed
+        scamCount:
+          type: integer
+          description: Number of scam detections
+        hamCount:
+          type: integer
+          description: Number of non-scam results
+        scamRate:
+          type: number
+          format: float
+          description: Percentage of scam messages (0-100)
+        recentResults:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalysisResult"
+          description: Last 5 results
+      required:
+        - total
+        - scamCount
+        - hamCount
+        - scamRate
+        - recentResults
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
