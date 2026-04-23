@@ -41,7 +41,7 @@ export function ForgotPasswordPage() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-[440px]">
-        <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+        <div className="bg-white dark:bg-card rounded-2xl shadow-md overflow-hidden">
           <div className="bg-primary px-10 py-7 flex items-center gap-3">
             <div className="bg-white/20 p-2 rounded-lg">
               <Shield className="h-5 w-5 text-white" />
