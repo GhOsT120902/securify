@@ -242,10 +242,23 @@
   animation: badge-glow-pulse 2.5s ease-in-out infinite;
 }
 
+.card-hover-glow {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card-hover-glow:hover {
+  box-shadow: 0 0 18px 4px hsl(0 84% 55% / 0.22), 0 0 40px 10px hsl(0 84% 55% / 0.1);
+  border-color: hsl(0 84% 55% / 0.35);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cta-glow,
   .badge-glow {
     animation: none;
+  }
+
+  .card-hover-glow {
+    transition: none;
   }
 }
 
