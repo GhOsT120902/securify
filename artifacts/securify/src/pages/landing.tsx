@@ -79,9 +79,9 @@ export function Landing() {
       <main className="flex-1">
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <MatrixRain className="opacity-30" />
+            <MatrixRain className="opacity-60" />
           </div>
-          <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/60 via-black/40 to-black" />
+          <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/40 via-black/20 to-black" />
           <div className="relative z-[2] container mx-auto px-4 md:px-8 py-28 md:py-40 text-center max-w-4xl">
             <div className="hero-anim badge-glow inline-flex items-center gap-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium px-4 py-1.5 rounded-full mb-8" style={{ animationDelay: "0s" }}>
               <Shield className="h-3.5 w-3.5" />

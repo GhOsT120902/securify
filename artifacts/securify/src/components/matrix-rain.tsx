@@ -22,17 +22,16 @@ export function MatrixRain({ className = "" }: { className?: string }) {
 
     function draw() {
       if (!ctx || !canvas) return;
-      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = "#00ff41";
       ctx.font = `${fontSize}px monospace`;
 
       for (let i = 0; i < drops.length; i++) {
         const text = chars[Math.floor(Math.random() * chars.length)];
         ctx.fillStyle = drops[i] * fontSize < fontSize * 2
           ? "#ffffff"
-          : `rgba(0, ${Math.floor(Math.random() * 80 + 175)}, ${Math.floor(Math.random() * 30 + 30)}, ${Math.random() * 0.4 + 0.6})`;
+          : `rgba(0, ${Math.floor(Math.random() * 55 + 200)}, ${Math.floor(Math.random() * 20 + 20)}, ${Math.random() * 0.3 + 0.7})`;
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
 
         if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
