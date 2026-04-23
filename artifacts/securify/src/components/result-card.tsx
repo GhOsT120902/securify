@@ -40,8 +40,8 @@ export function ResultCard({ result, error }: ResultCardProps) {
       <Card className={cn(
         "overflow-hidden h-full border-t-4",
         isScam 
-          ? "border-t-destructive border-x-destructive/20 border-b-destructive/20 bg-destructive/5 shadow-[0_8px_30px_rgb(220,38,38,0.1)]" 
-          : "border-t-primary border-x-primary/20 border-b-primary/20 bg-primary/5 shadow-[0_8px_30px_rgb(22,163,74,0.1)]"
+          ? "border-t-destructive border-x-destructive/20 border-b-destructive/20 bg-destructive/5 shadow-[0_8px_30px_rgb(239,68,68,0.12)]" 
+          : "border-t-primary border-x-primary/20 border-b-primary/20 bg-primary/5 shadow-[0_8px_30px_rgb(59,130,246,0.12)]"
       )}>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3">
