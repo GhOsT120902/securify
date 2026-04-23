@@ -15,7 +15,23 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
-- **Auth**: Replit-managed Clerk (`@clerk/react`, `@clerk/express`) — keys auto-provisioned
+- **Auth**: Fully custom — `express-session` + `bcryptjs` + `connect-pg-simple` (no Clerk)
+- **Email**: Resend API (`RESEND_API_KEY` secret) — sign-up OTP verification + password reset OTP
+
+## Auth Flow
+
+- Sign-up: email+password → Resend OTP email → verify OTP → session created
+- Sign-in: email+password → session created (cookie `sid`)
+- Forgot password: email → Resend OTP email → verify OTP + new password → hash updated
+- Sessions stored in `user_sessions` DB table (connect-pg-simple)
+
+## DB Tables
+
+- `users` — id, email (unique), password_hash, email_verified, created_at
+- `analyses` — id, user_id (text), text, summary, is_scam, confidence_level, message_hash, created_at
+- `password_resets` — id, email, otp, expires_at, used, created_at
+- `email_verifications` — id, email, otp, expires_at, used, created_at
+- `user_sessions` — managed by connect-pg-simple (auto-created)
 
 ## Key Commands
 

@@ -12,7 +12,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useUser, useAuth } from "@clerk/react";
+import { useAuthContext } from "@/contexts/auth-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,8 +32,7 @@ export function Home() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [inputMode, setInputMode] = useState<InputMode>("image");
   const queryClient = useQueryClient();
-  const { user } = useUser();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuthContext();
 
   const afterAnalysis = () => {
     setRefreshTrigger((prev) => prev + 1);
@@ -56,7 +55,7 @@ export function Home() {
 
   const showInput = !isAnalyzing && !result && !error;
 
-  const displayName = user?.firstName || user?.username || user?.primaryEmailAddress?.emailAddress?.split("@")[0] || "Account";
+  const displayName = user?.email?.split("@")[0] ?? "Account";
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
@@ -101,14 +100,14 @@ export function Home() {
                   <div className="flex flex-col gap-0.5">
                     <span className="font-medium text-sm">{displayName}</span>
                     <span className="text-xs text-muted-foreground truncate">
-                      {user?.primaryEmailAddress?.emailAddress}
+                      {user?.email}
                     </span>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="gap-2 text-muted-foreground cursor-pointer"
-                  onClick={() => signOut({ redirectUrl: `${basePath}/` })}
+                  onClick={async () => { await signOut(); queryClient.clear(); }}
                 >
                   <LogOut className="h-4 w-4" />
                   Sign out

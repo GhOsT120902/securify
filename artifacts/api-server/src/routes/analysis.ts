@@ -1,7 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { db, analysesTable } from "@workspace/db";
 import { eq, desc, count, sql, and } from "drizzle-orm";
-import { getAuth } from "@clerk/express";
 import { runAnalysisPipeline, runTextAnalysisPipeline, type AgentEvent } from "../lib/agents.js";
 import { AnalyzeImageBody, ListResultsQueryParams, GetResultParams } from "@workspace/api-zod";
 import { z } from "zod";
@@ -9,13 +8,12 @@ import { z } from "zod";
 const router = Router();
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const auth = getAuth(req);
-  const userId = auth?.userId;
+  const userId = req.session?.userId;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized", message: "You must be signed in" });
     return;
   }
-  (req as Request & { userId: string }).userId = userId;
+  (req as Request & { userId: string }).userId = String(userId);
   next();
 }
 
