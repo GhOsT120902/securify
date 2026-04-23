@@ -214,6 +214,46 @@
   --chart-5: 200 80% 55%;
 }
 
+@keyframes cta-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px 2px hsl(0 84% 55% / 0.45), 0 0 24px 6px hsl(0 84% 55% / 0.2);
+  }
+  50% {
+    box-shadow: 0 0 18px 5px hsl(0 84% 55% / 0.75), 0 0 48px 12px hsl(0 84% 55% / 0.35);
+  }
+}
+
+@keyframes badge-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 4px 1px hsl(0 84% 55% / 0.3);
+    border-color: hsl(0 84% 55% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 12px 3px hsl(0 84% 55% / 0.55);
+    border-color: hsl(0 84% 55% / 0.65);
+  }
+}
+
+.cta-glow {
+  animation: cta-glow-pulse 2s ease-in-out infinite;
+}
+
+.badge-glow {
+  animation: badge-glow-pulse 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta-glow,
+  .badge-glow {
+    animation: none;
+  }
+}
+
+.cta-glow:focus-visible {
+  animation: none;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+}
+
 @layer base {
   * {
     @apply border-border;

@@ -83,7 +83,7 @@ export function Landing() {
           </div>
           <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/60 via-black/40 to-black" />
           <div className="relative z-[2] container mx-auto px-4 md:px-8 py-28 md:py-40 text-center max-w-4xl">
-            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium px-4 py-1.5 rounded-full mb-8">
+            <div className="badge-glow inline-flex items-center gap-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium px-4 py-1.5 rounded-full mb-8">
               <Shield className="h-3.5 w-3.5" />
               AI-Powered Scam Detection
             </div>
@@ -96,7 +96,7 @@ export function Landing() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/sign-up">
-                <Button size="lg" className="gap-2 text-base px-8 bg-primary hover:bg-primary/90 text-white border-primary/70 font-semibold">
+                <Button size="lg" className="cta-glow gap-2 text-base px-8 bg-primary hover:bg-primary/90 text-white border-primary/70 font-semibold">
                   Create free account
                   <ArrowRight className="h-4 w-4" />
                 </Button>
