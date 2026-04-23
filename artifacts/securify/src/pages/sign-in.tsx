@@ -79,12 +79,14 @@ export function SignInPage() {
             <p className="text-sm text-muted-foreground">Sign in to your Securify account</p>
           </div>
 
-          <GoogleButton label="Sign in with Google" />
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-border" />
+            <GoogleButton />
+            <div className="flex-1 h-px bg-border" />
+          </div>
 
-          <div className="relative flex items-center gap-3">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <div className="flex-1 h-px bg-border" />
+          <div className="flex items-center justify-center">
+            <span className="text-xs text-muted-foreground">or sign in with email</span>
           </div>
 
           <div className="space-y-2">

@@ -114,12 +114,14 @@ export function SignUpPage() {
                   <p className="text-sm text-muted-foreground">Start checking messages for free</p>
                 </div>
 
-                <GoogleButton label="Sign up with Google" />
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <GoogleButton />
+                  <div className="flex-1 h-px bg-border" />
+                </div>
 
-                <div className="relative flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground">or</span>
-                  <div className="flex-1 h-px bg-border" />
+                <div className="flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground">or create account with email</span>
                 </div>
 
                 <div className="space-y-2">

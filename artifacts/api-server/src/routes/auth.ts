@@ -134,7 +134,14 @@ router.post("/verify-email", async (req: Request, res: Response) => {
     }
 
     req.session.userId = users[0].id;
-    res.json({ success: true });
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error("Session save error:", saveErr);
+        res.status(500).json({ error: "Verification failed" });
+        return;
+      }
+      res.json({ success: true });
+    });
   } catch (err) {
     console.error("Verify email error:", err);
     res.status(500).json({ error: "Verification failed" });
@@ -163,6 +170,12 @@ router.post("/login", async (req: Request, res: Response) => {
     }
 
     const user = users[0];
+
+    if (!user.passwordHash) {
+      res.status(401).json({ error: "This account uses Google sign-in. Please use the Google button to sign in." });
+      return;
+    }
+
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       res.status(401).json({ error: "Invalid email or password" });
@@ -175,7 +188,14 @@ router.post("/login", async (req: Request, res: Response) => {
     }
 
     req.session.userId = user.id;
-    res.json({ success: true, user: { id: user.id, email: user.email } });
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error("Session save error:", saveErr);
+        res.status(500).json({ error: "Login failed" });
+        return;
+      }
+      res.json({ success: true, user: { id: user.id, email: user.email } });
+    });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Login failed" });
@@ -446,7 +466,14 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     }
 
     req.session.userId = user.id;
-    res.redirect("/app");
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error("Google session save error:", saveErr);
+        res.redirect("/?error=session_error");
+        return;
+      }
+      res.redirect("/app");
+    });
   } catch (err) {
     console.error("Google callback error:", err);
     res.redirect("/?error=google_auth_failed");
