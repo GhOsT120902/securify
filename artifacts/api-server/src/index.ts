@@ -22,4 +22,11 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  const domain = process.env.GOOGLE_REDIRECT_URI
+    ? "(custom)"
+    : process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(",")[0];
+  const callbackUrl = process.env.GOOGLE_REDIRECT_URI
+    || `https://${domain}/api/auth/google/callback`;
+  logger.info({ callbackUrl }, "Google OAuth callback URL — add this to Google Cloud Console if sign-in fails");
 });
