@@ -39,11 +39,11 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-black px-4">
       <div className="w-full max-w-[440px]">
-        <div className="bg-white dark:bg-card rounded-2xl shadow-md overflow-hidden">
+        <div className="bg-[#111] border border-white/8 rounded-2xl overflow-hidden">
           <div className="bg-primary px-10 py-7 flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-lg">
+            <div className="bg-white/15 p-2 rounded-lg border border-white/20">
               <Shield className="h-5 w-5 text-white" />
             </div>
             <span className="text-white font-bold text-lg tracking-tight">Securify</span>
@@ -53,15 +53,15 @@ export function ForgotPasswordPage() {
             {sent ? (
               <div className="text-center space-y-4">
                 <div className="flex justify-center">
-                  <div className="bg-primary/10 p-4 rounded-full">
+                  <div className="bg-primary/10 p-4 rounded-full border border-primary/20">
                     <CheckCircle className="h-8 w-8 text-primary" />
                   </div>
                 </div>
-                <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>
+                <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
                   Check your email
                 </h1>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  If <strong className="text-foreground">{email}</strong> is registered, a 6-digit code is on its way. Check your inbox and paste the code on the next page.
+                <p className="text-white/50 text-sm leading-relaxed">
+                  If <strong className="text-white">{email}</strong> is registered, a 6-digit code is on its way. Check your inbox and paste the code on the next page.
                 </p>
                 <Link href={`${basePath}/reset-password?email=${encodeURIComponent(email)}`}>
                   <Button className="w-full mt-2">
@@ -69,7 +69,7 @@ export function ForgotPasswordPage() {
                   </Button>
                 </Link>
                 <button
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm text-white/50 hover:text-primary transition-colors"
                   onClick={() => { setSent(false); setEmail(""); }}
                 >
                   Use a different email
@@ -78,23 +78,23 @@ export function ForgotPasswordPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground mb-1" style={{ fontFamily: "var(--font-display)" }}>
+                  <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: "var(--font-display)" }}>
                     Forgot password?
                   </h1>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-white/50">
                     Enter your email and we'll send you a one-time code.
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email address</Label>
+                  <Label htmlFor="email" className="text-white/70">Email address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                     <Input
                       id="email"
                       type="email"
                       placeholder="you@example.com"
-                      className="pl-9"
+                      className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-primary"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -104,7 +104,7 @@ export function ForgotPasswordPage() {
                 </div>
 
                 {error && (
-                  <p className="text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
+                  <p className="text-sm text-primary bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
                     {error}
                   </p>
                 )}
@@ -121,7 +121,7 @@ export function ForgotPasswordPage() {
                 </Button>
 
                 <div className="text-center">
-                  <Link href={`${basePath}/sign-in`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors">
+                  <Link href={`${basePath}/sign-in`} className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-primary transition-colors">
                     <ArrowLeft className="h-3.5 w-3.5" />
                     Back to sign in
                   </Link>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,11 +60,11 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-black px-4">
       <div className="w-full max-w-[440px]">
-        <div className="bg-white dark:bg-card rounded-2xl shadow-md overflow-hidden">
+        <div className="bg-[#111] border border-white/8 rounded-2xl overflow-hidden">
           <div className="bg-primary px-10 py-7 flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-lg">
+            <div className="bg-white/15 p-2 rounded-lg border border-white/20">
               <Shield className="h-5 w-5 text-white" />
             </div>
             <span className="text-white font-bold text-lg tracking-tight">Securify</span>
@@ -74,14 +74,14 @@ export function ResetPasswordPage() {
             {done ? (
               <div className="text-center space-y-4">
                 <div className="flex justify-center">
-                  <div className="bg-primary/10 p-4 rounded-full">
+                  <div className="bg-primary/10 p-4 rounded-full border border-primary/20">
                     <CheckCircle className="h-8 w-8 text-primary" />
                   </div>
                 </div>
-                <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>
+                <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
                   Password updated!
                 </h1>
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <p className="text-white/50 text-sm leading-relaxed">
                   Your password has been changed successfully. You can now sign in with your new password.
                 </p>
                 <Link href={`${basePath}/sign-in`}>
@@ -93,21 +93,22 @@ export function ResetPasswordPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground mb-1" style={{ fontFamily: "var(--font-display)" }}>
+                  <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: "var(--font-display)" }}>
                     Set new password
                   </h1>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-white/50">
                     Enter the 6-digit code from your email and choose a new password.
                   </p>
                 </div>
 
                 {!emailParam && (
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email address</Label>
+                    <Label htmlFor="email" className="text-white/70">Email address</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="you@example.com"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-primary"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -116,14 +117,14 @@ export function ResetPasswordPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="otp">6-digit code</Label>
+                  <Label htmlFor="otp" className="text-white/70">6-digit code</Label>
                   <Input
                     id="otp"
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
                     placeholder="123456"
-                    className="text-center text-xl font-bold tracking-[0.4em] font-mono"
+                    className="text-center text-xl font-bold tracking-[0.4em] font-mono bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-primary"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     required
@@ -132,21 +133,21 @@ export function ResetPasswordPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">New password</Label>
+                  <Label htmlFor="newPassword" className="text-white/70">New password</Label>
                   <div className="relative">
-                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                     <Input
                       id="newPassword"
                       type={showPassword ? "text" : "password"}
                       placeholder="At least 8 characters"
-                      className="pl-9 pr-10"
+                      className="pl-9 pr-10 bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-primary"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -155,11 +156,12 @@ export function ResetPasswordPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm password</Label>
+                  <Label htmlFor="confirmPassword" className="text-white/70">Confirm password</Label>
                   <Input
                     id="confirmPassword"
                     type={showPassword ? "text" : "password"}
                     placeholder="Repeat new password"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-primary"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
@@ -167,7 +169,7 @@ export function ResetPasswordPage() {
                 </div>
 
                 {error && (
-                  <p className="text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
+                  <p className="text-sm text-primary bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
                     {error}
                   </p>
                 )}
@@ -184,7 +186,7 @@ export function ResetPasswordPage() {
                 </Button>
 
                 <div className="text-center">
-                  <Link href={`${basePath}/forgot-password`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors">
+                  <Link href={`${basePath}/forgot-password`} className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-primary transition-colors">
                     <ArrowLeft className="h-3.5 w-3.5" />
                     Request a new code
                   </Link>

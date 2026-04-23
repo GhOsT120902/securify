@@ -8,7 +8,6 @@ import { HistoryPanel } from "@/components/history-panel";
 import { useAnalyze } from "@/hooks/use-analyze";
 import { useGetStats, getGetStatsQueryKey } from "@workspace/api-client-react";
 import { Shield, ShieldAlert, Activity, RefreshCw, Image, MessageSquare, Link, FileText, LogOut, User } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -70,15 +69,15 @@ export function Home() {
   const displayName = user?.displayName ?? user?.email?.split("@")[0] ?? "Account";
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background">
+    <div className="min-h-[100dvh] flex flex-col bg-black">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-white/8 bg-black/95 backdrop-blur">
         <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="bg-primary/10 p-2 rounded-lg">
+            <div className="bg-primary/15 p-2 rounded-lg border border-primary/20">
               <Shield className="h-5 w-5 text-primary" />
             </div>
-            <span className="font-display font-bold text-xl tracking-tight text-foreground">
+            <span className="font-display font-bold text-xl tracking-tight text-white">
               Securify
             </span>
           </div>
@@ -86,23 +85,21 @@ export function Home() {
           <div className="flex items-center gap-3">
             {stats && (
               <div className="hidden md:flex items-center gap-6 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 text-white/50">
                   <Activity className="h-4 w-4" />
                   <span>{stats.total.toLocaleString()} analyzed</span>
                 </div>
-                <div className="w-px h-4 bg-border" />
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <ShieldAlert className="h-4 w-4 text-destructive/70" />
+                <div className="w-px h-4 bg-white/10" />
+                <div className="flex items-center gap-2 text-white/50">
+                  <ShieldAlert className="h-4 w-4 text-primary/70" />
                   <span>{stats.scamRate.toFixed(1)}% scam rate</span>
                 </div>
               </div>
             )}
 
-            <ThemeToggle />
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="gap-2 border-white/15 text-white/80 hover:text-white">
                   {user?.avatarUrl ? (
                     <img src={user.avatarUrl} alt={displayName} className="h-5 w-5 rounded-full object-cover" />
                   ) : (
@@ -111,18 +108,18 @@ export function Home() {
                   <span className="hidden sm:inline max-w-[120px] truncate">{displayName}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-48 bg-[#111] border-white/10">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col gap-0.5">
-                    <span className="font-medium text-sm">{displayName}</span>
-                    <span className="text-xs text-muted-foreground truncate">
+                    <span className="font-medium text-sm text-white">{displayName}</span>
+                    <span className="text-xs text-white/50 truncate">
                       {user?.email}
                     </span>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-white/8" />
                 <DropdownMenuItem
-                  className="gap-2 text-muted-foreground cursor-pointer"
+                  className="gap-2 text-white/60 cursor-pointer hover:text-white"
                   onClick={async () => { await signOut(); queryClient.clear(); }}
                 >
                   <LogOut className="h-4 w-4" />
@@ -141,11 +138,11 @@ export function Home() {
           {/* Left Column */}
           <div className="lg:col-span-8 space-y-6">
             <div className="space-y-3">
-              <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight">
+              <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-white">
                 Suspicious message?{" "}
                 <span className="text-primary">Let's check.</span>
               </h1>
-              <p className="text-lg text-muted-foreground max-w-2xl">
+              <p className="text-lg text-white/50 max-w-2xl">
                 Upload a screenshot or paste the text of any suspicious message. Our AI agents will analyze it and tell you if it's safe.
               </p>
             </div>
@@ -157,17 +154,17 @@ export function Home() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-card rounded-2xl border shadow-sm overflow-hidden"
+                  className="bg-[#111] rounded-2xl border border-white/8 overflow-hidden"
                 >
                   {/* Mode tabs */}
-                  <div className="flex border-b">
+                  <div className="flex border-b border-white/8">
                     <button
                       onClick={() => setInputMode("image")}
                       className={cn(
                         "flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px",
                         inputMode === "image"
                           ? "border-primary text-primary"
-                          : "border-transparent text-muted-foreground hover:text-foreground",
+                          : "border-transparent text-white/40 hover:text-white/70",
                       )}
                       data-testid="tab-image"
                     >
@@ -180,7 +177,7 @@ export function Home() {
                         "flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px",
                         inputMode === "text"
                           ? "border-primary text-primary"
-                          : "border-transparent text-muted-foreground hover:text-foreground",
+                          : "border-transparent text-white/40 hover:text-white/70",
                       )}
                       data-testid="tab-text"
                     >
@@ -193,7 +190,7 @@ export function Home() {
                         "flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px",
                         inputMode === "url"
                           ? "border-primary text-primary"
-                          : "border-transparent text-muted-foreground hover:text-foreground",
+                          : "border-transparent text-white/40 hover:text-white/70",
                       )}
                       data-testid="tab-url"
                     >
@@ -206,7 +203,7 @@ export function Home() {
                         "flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px",
                         inputMode === "document"
                           ? "border-primary text-primary"
-                          : "border-transparent text-muted-foreground hover:text-foreground",
+                          : "border-transparent text-white/40 hover:text-white/70",
                       )}
                       data-testid="tab-document"
                     >
@@ -276,7 +273,7 @@ export function Home() {
                           variant="outline"
                           size="sm"
                           onClick={handleReset}
-                          className="gap-2"
+                          className="gap-2 border-white/15 text-white/70 hover:text-white"
                         >
                           <RefreshCw className="h-4 w-4" />
                           Check another
@@ -299,15 +296,15 @@ export function Home() {
           {/* Right Column: History */}
           <div className="lg:col-span-4 space-y-6">
             {stats && (
-              <div className="md:hidden bg-card rounded-xl border p-4 flex justify-between items-center shadow-sm">
+              <div className="md:hidden bg-[#111] rounded-xl border border-white/8 p-4 flex justify-between items-center">
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Total Analyzed</span>
-                  <span className="font-display font-semibold text-xl">{stats.total.toLocaleString()}</span>
+                  <span className="text-xs text-white/40 font-medium uppercase tracking-wider mb-1">Total Analyzed</span>
+                  <span className="font-display font-semibold text-xl text-white">{stats.total.toLocaleString()}</span>
                 </div>
-                <div className="w-px h-10 bg-border" />
+                <div className="w-px h-10 bg-white/10" />
                 <div className="flex flex-col items-end">
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Scam Rate</span>
-                  <span className="font-display font-semibold text-xl text-destructive">{stats.scamRate.toFixed(1)}%</span>
+                  <span className="text-xs text-white/40 font-medium uppercase tracking-wider mb-1">Scam Rate</span>
+                  <span className="font-display font-semibold text-xl text-primary">{stats.scamRate.toFixed(1)}%</span>
                 </div>
               </div>
             )}

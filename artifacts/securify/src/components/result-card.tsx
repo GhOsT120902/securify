@@ -12,9 +12,9 @@ interface ResultCardProps {
 export function ResultCard({ result, error }: ResultCardProps) {
   if (error) {
     return (
-      <Card className="border-destructive/50 bg-destructive/5 text-destructive overflow-hidden h-full">
+      <Card className="border-primary/30 bg-primary/5 text-primary overflow-hidden h-full">
         <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full min-h-[300px]">
-          <div className="bg-destructive/10 p-4 rounded-full mb-4">
+          <div className="bg-primary/10 p-4 rounded-full mb-4">
             <AlertTriangle className="h-8 w-8" />
           </div>
           <h3 className="font-semibold text-lg mb-2">Analysis Failed</h3>
@@ -39,25 +39,25 @@ export function ResultCard({ result, error }: ResultCardProps) {
     >
       <Card className={cn(
         "overflow-hidden h-full border-t-4",
-        isScam 
-          ? "border-t-destructive border-x-destructive/20 border-b-destructive/20 bg-destructive/5 shadow-[0_8px_30px_rgb(239,68,68,0.12)]" 
-          : "border-t-primary border-x-primary/20 border-b-primary/20 bg-primary/5 shadow-[0_8px_30px_rgb(59,130,246,0.12)]"
+        isScam
+          ? "border-t-primary border-x-primary/20 border-b-primary/20 bg-primary/5 shadow-[0_8px_30px_rgb(220,38,38,0.15)]"
+          : "border-t-safe border-x-safe/20 border-b-safe/20 bg-safe/5 shadow-[0_8px_30px_rgb(34,197,94,0.12)]"
       )}>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3">
             {isScam ? (
               <>
-                <div className="bg-destructive/10 p-2 rounded-lg">
-                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20">
+                  <AlertTriangle className="h-6 w-6 text-primary" />
                 </div>
-                <span className="text-2xl font-bold tracking-tight text-destructive">It's a Scam</span>
+                <span className="text-2xl font-bold tracking-tight text-primary">It's a Scam</span>
               </>
             ) : (
               <>
-                <div className="bg-primary/10 p-2 rounded-lg">
-                  <ShieldCheck className="h-6 w-6 text-primary" />
+                <div className="bg-safe/10 p-2 rounded-lg border border-safe/20">
+                  <ShieldCheck className="h-6 w-6 text-safe" />
                 </div>
-                <span className="text-2xl font-bold tracking-tight text-primary">Looks Safe</span>
+                <span className="text-2xl font-bold tracking-tight text-safe">Looks Safe</span>
               </>
             )}
           </CardTitle>
@@ -65,8 +65,8 @@ export function ResultCard({ result, error }: ResultCardProps) {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm font-medium">
-              <span className="text-muted-foreground">Confidence Level</span>
-              <span className={isScam ? "text-destructive" : "text-primary"}>
+              <span className="text-white/50">Confidence Level</span>
+              <span className={isScam ? "text-primary" : "text-safe"}>
                 {result.confidenceLevel} / 5
               </span>
             </div>
@@ -77,17 +77,17 @@ export function ResultCard({ result, error }: ResultCardProps) {
                   className={cn(
                     "h-2 flex-1 rounded-full transition-colors",
                     level <= result.confidenceLevel
-                      ? isScam ? "bg-destructive" : "bg-primary"
-                      : "bg-muted"
+                      ? isScam ? "bg-primary" : "bg-safe"
+                      : "bg-white/10"
                   )}
                 />
               ))}
             </div>
           </div>
 
-          <div className="bg-background rounded-lg p-5 border border-border/50 shadow-sm leading-relaxed text-sm">
-            <p className="font-medium mb-2 text-foreground">Analysis Summary</p>
-            <p className="text-muted-foreground">{result.summary}</p>
+          <div className="bg-black/40 rounded-lg p-5 border border-white/8 shadow-sm leading-relaxed text-sm">
+            <p className="font-medium mb-2 text-white">Analysis Summary</p>
+            <p className="text-white/60">{result.summary}</p>
           </div>
         </CardContent>
       </Card>
