@@ -1,4 +1,4 @@
-import { Shield, ScanSearch, History, Globe, ArrowRight, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Shield, ScanSearch, History, Globe, ArrowRight, ShieldAlert, ShieldCheck, Briefcase, TrendingUp, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "wouter";
@@ -130,6 +130,58 @@ export function Landing() {
           </div>
         </section>
       </main>
+
+      {/* Learn About Scams */}
+        <section className="border-t bg-card/50">
+          <div className="container mx-auto px-4 md:px-8 py-16 md:py-24 max-w-4xl">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl md:text-4xl font-display font-bold tracking-tight mb-3">
+                Learn About Scams
+              </h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Educate yourself on the most common tactics used to defraud consumers online.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="bg-card border rounded-2xl p-7 shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-primary/10 p-3 rounded-xl inline-flex mb-5">
+                  <Briefcase className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-display font-bold text-lg mb-2">Fake Job Offers</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Scammers asking for registration fees for non-existent jobs.
+                </p>
+              </div>
+              <div className="bg-card border rounded-2xl p-7 shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-primary/10 p-3 rounded-xl inline-flex mb-5">
+                  <Shield className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-display font-bold text-lg mb-2">Phishing</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Fake bank links trying to steal your credentials.
+                </p>
+              </div>
+              <div className="bg-card border rounded-2xl p-7 shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-primary/10 p-3 rounded-xl inline-flex mb-5">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-display font-bold text-lg mb-2">Investment Scams</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  High-return promises via Telegram or WhatsApp.
+                </p>
+              </div>
+              <div className="bg-card border rounded-2xl p-7 shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-primary/10 p-3 rounded-xl inline-flex mb-5">
+                  <Gift className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-display font-bold text-lg mb-2">Lottery Scams</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  SMS claims of winning prizes or digital lotteries.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
       {/* Footer */}
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
